@@ -7,7 +7,7 @@ It is a different project, since it takes all the data about one startup until t
 
 ## Invesscience gives investors a model that recommends in which startup put their money in, it identifies easily good startups, but it also regards to be not too strict and do not lose a hidden jewell in the sea of startups.
 
-_______________._____________________
+
 
 In order to create Invesscience, it has been taken into account a long Dataset from CrunchBase, and it has been modified, in a process called feature engineering,  aiming to get the best features which explain the investment problem.
 
