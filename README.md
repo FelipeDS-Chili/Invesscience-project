@@ -1,70 +1,36 @@
-# Data analysis
-- Document here the project: invesscience
-- Description: Project Description
-- Data Source:
-- Type of analysis:
 
-Please document the project the better you can.
+# Invesscience
 
-# Stratup the project
+Invesscience is a project made in order to give a practical tool to investors along the hard way to find out profitable startups.
 
-The initial setup.
+It is a different project, since it takes all the data about one startup until the moment of its Series A round of investment. So, it takes information about the founders like University Background, University Name, Sex of each Founder, Location of the startup, amount of investment until the Series A round, among others.
 
-Create virtualenv and install the project:
-```bash
-  $ sudo apt-get install virtualenv python-pip python-dev
-  $ deactivate; virtualenv ~/venv ; source ~/venv/bin/activate ;\
-    pip install pip -U; pip install -r requirements.txt
-```
+## Invesscience gives investors a model that recommends in which startup put their money in, it identifies easily good startups, but it also regards to be not too strict and do not lose a hidden jewell in the sea of startups.
 
-Unittest test:
-```bash
-  $ make clean install test
-```
 
-Check for invesscience in gitlab.com/{group}.
-If your project is not set please add it:
 
-- Create a new project on `gitlab.com/{group}/invesscience`
-- Then populate it:
+In order to create Invesscience, it has been taken into account a long Dataset from CrunchBase, and it has been modified, in a process called feature engineering,  aiming to get the best features which explain the investment problem.
 
-```bash
-  $ ##   e.g. if group is "{group}" and project_name is "invesscience"
-  $ git remote add origin git@gitlab.com:{group}/invesscience.git
-  $ git push -u origin master
-  $ git push -u origin --tags
-```
+It has been developed four big stages:
 
-Functionnal test with a script:
-```bash
-  $ cd /tmp
-  $ invesscience-run
-```
-# Install
-Go to `gitlab.com/{group}/invesscience` to see the project, manage issues,
-setup you ssh public key, ...
 
-Create a python3 virtualenv and activate it:
-```bash
-  $ sudo apt-get install virtualenv python-pip python-dev
-  $ deactivate; virtualenv -ppython3 ~/venv ; source ~/venv/bin/activate
-```
+## Data analysis
 
-Clone the project and install it:
-```bash
-  $ git clone gitlab.com/{group}/invesscience
-  $ cd invesscience
-  $ pip install -r requirements.txt
-  $ make clean install test                # install and test
-```
-Functionnal test with a script:
-```bash
-  $ cd /tmp
-  $ invesscience-run
-``` 
+A deep data analysis using jupyter notebooks, to identify patterns in the data, and also to find out the nature of the outliers.
 
-# Continus integration
-## Github 
-Every push of `master` branch will execute `.github/workflows/pythonpackages.yml` docker jobs.
-## Gitlab
-Every push of `master` branch will execute `.gitlab-ci.yml` docker jobs.
+
+## Feature Engineering
+
+With the Data Analysis it has been done a continues feature engineering, in order to get the type of data to use (text or numbers), in order to avoid the noise caused by the data in the model performance.
+
+## Tracking of ML performance
+
+It has been used the MLFlow tool in order to track all the performance and the score metric choosed.
+The Score used has been F1- Score.
+
+## Deployment on Heroku
+
+You can access to Invesscience API whenever you want visiting:  https://invesscience.herokuapp.com
+
+
+
