@@ -11,40 +11,41 @@ from mlflow.tracking import MlflowClient
 from psutil import virtual_memory
 from sklearn.compose import ColumnTransformer
 from sklearn.svm import SVC
-from sklearn.ensemble import GradientBoostingRegressor,RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import GradientBoostingRegressor,RandomForestClassifier, RandomForestClassifier, VotingClassifier, AdaBoostClassifier , GradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression, SGDClassifier, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, RandomizedSearchCV, GridSearchCV
 from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import OneHotEncoder, StandardScaler, OrdinalEncoder, Binarizer, RobustScaler, MinMaxScaler
 from termcolor import colored
 from xgboost import XGBRegressor
 from invesscience.utils import compute_f1, simple_time_tracker, compute_precision, get_data_filled
 from invesscience.joanna_merge import get_training_data
-from sklearn.compose import ColumnTransformer
 from sklearn.impute import KNNImputer,SimpleImputer
-
-from sklearn.preprocessing import OneHotEncoder, MinMaxScaler, RobustScaler,StandardScaler
-
-from sklearn.ensemble import RandomForestClassifier, VotingClassifier, AdaBoostClassifier , GradientBoostingClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
-
 from scipy.stats import uniform, randint
 from xgboost import XGBClassifier
-from sklearn.linear_model import SGDClassifier
-from sklearn.preprocessing import OrdinalEncoder
-from sklearn.preprocessing import Binarizer
 from imblearn.pipeline import make_pipeline
 from imblearn.over_sampling import SMOTE, ADASYN
 from imblearn.pipeline import Pipeline as Pipeline_imb
 from sklearn.inspection import permutation_importance
 from sklearn.naive_bayes import GaussianNB
+from google.cloud import storage
 
 
 
 MLFLOW_URI = "https://mlflow.lewagon.co/"
+
+BUCKET_NAME = 'wagon-ml-felipeinostrozarios-21'
+
+BUCKET_TRAIN_DATA_PATH = 'data/train_1k.csv'
+
+MODEL_NAME = 'taxifare'
+
+MODEL_VERSION = 'v1'
+
+STORAGE_LOCATION = 'models/simpletaxifare/model_taxi.joblib'
+
 
 
 class Trainer(object):
@@ -149,23 +150,8 @@ class Trainer(object):
 
 
 
-
-#[3, 1, 3, 2, 3]
-#[6, 2, 5, 3, 4]
-#[7, 4, 5, 3, 5]
-
-
         elif estimator =='SGDC':
             model = SGDClassifier(class_weight ='balanced')
-
-#[1,2,3,4,5,6] --> 0,454
-#[5,6,2,1,6,4] --> 0,361
-#[8,7,6,5,4,3]
-#[6,5,7,4,8,3]
-
-
-        #else:
-            #model = Lasso()
 
 
         estimator_params = self.kwargs.get("estimator_params", {}) #Dictionary
@@ -416,6 +402,7 @@ class Trainer(object):
             print(colored("f1 train: {}".format(f1_train), "blue"))
             print(colored("precision train: {}".format(precision_train), "blue"))
 
+
     def compute_f1(self, X_test, y_test, show=False):
         if self.pipeline is None:
             raise ("Cannot evaluate an empty pipeline")
@@ -440,10 +427,51 @@ class Trainer(object):
         return round(precision, 3)
 
 
-    def save_model(self):
-        """Save the model into a .joblib format"""
-        joblib.dump(self.pipeline, 'Final_model.joblib')
-        print(colored("final.joblib saved locally", "green"))
+
+    def save_model(self, upload=True, auto_remove=True):
+        """Save the model into a .joblib and upload it on Google Storage /models folder
+        HINTS : use sklearn.joblib (or jbolib) libraries and google-cloud-storage"""
+        joblib.dump(self.pipeline, 'model_taxi.joblib')
+        print(colored("model_taxi.joblib saved locally", "green"))
+        if upload:
+            self.upload_model_to_gcp()
+            print(f"uploaded model_taxi.joblib to gcp cloud storage under \n => {STORAGE_LOCATION}")
+
+    #  optimization of integers and floats (downcast)
+    def df_optimized(self, df, verbose=True, **kwargs):
+        """
+        Reduces size of dataframe by downcasting numeircal columns
+        :param df: input dataframe
+        :param verbose: print size reduction if set to True
+        :param kwargs:
+        :return: df optimized
+        """
+        in_size = df.memory_usage(index=True).sum()
+        # Optimized size here
+        for type in ["float", "integer"]:
+            l_cols = list(df.select_dtypes(include=type))
+            for col in l_cols:
+                df[col] = pd.to_numeric(df[col], downcast=type)
+                if type == "float":
+                    df[col] = pd.to_numeric(df[col], downcast="integer")
+        out_size = df.memory_usage(index=True).sum()
+        ratio = (1 - round(out_size / in_size, 2)) * 100
+        GB = out_size / 1000000000
+        if verbose:
+            print("optimized size by {} % | {} GB".format(ratio, GB))
+        return df
+
+    # method to upload the model to gcp
+    def upload_model_to_gcp(self):
+
+        client = storage.Client()
+
+        bucket = client.bucket(BUCKET_NAME)
+
+        blob = bucket.blob(STORAGE_LOCATION)
+
+        blob.upload_from_filename('model_taxi.joblib')
+
 
     ### MLFlow methods
     @memoized_property
@@ -530,8 +558,6 @@ if __name__ == "__main__":
                                 # 'RandomForestClassifier'
                                  ]:
 
-    #ADABOOST : DecisionTree()
-
             params = dict(tag_description=f'[MODEL FINAL]{estimator_iter}][{year}][{reference}]', reference =reference, year = year ,estimator = estimator_iter,
                 estimator_params ={ 'weights' :[6, 2, 5, 3, 4]},
                 local=False, split=True,  mlflow = True, experiment_name=experiment,
@@ -547,10 +573,6 @@ if __name__ == "__main__":
             #df= df[df.country_code=='USA']
 
 
-
-#[3, 1, 3, 2, 3]
-#[6, 2, 5, 3, 4]
-#[7, 4, 5, 3, 5]
             #del df
             print("shape: {}".format(X_train.shape))
             print("size: {} Mb".format(X_train.memory_usage().sum() / 1e6))
