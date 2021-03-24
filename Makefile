@@ -32,19 +32,19 @@ PYTHON_VERSION=3.7
 FRAMEWORK=scikit-learn
 RUNTIME_VERSION=1.15
 
-PACKAGE_NAME=SimpleTaxiFare
-FILENAME=trainer
+PACKAGE_NAME=invesscience
+FILENAME=mlflow
 
 
 JOB_NAME=taxi_fare_training_pipeline_$(shell date +'%Y%m%d_%H%M%S')
 
-
+#crear project en gcp storage
 set_project:
 	-@gcloud config set project ${PROJECT_ID}
-
+#crear bucket gcp storage
 create_bucket:
 	-@gsutil mb -l ${REGION} -p ${PROJECT_ID} gs://${BUCKET_NAME}
-
+#subir data a gcp storage
 upload_data:
 	-@gsutil cp ${LOCAL_PATH} gs://${BUCKET_NAME}/${BUCKET_FOLDER}/${BUCKET_FILE_NAME}
 
@@ -52,6 +52,7 @@ upload_data:
 run_locally:
 	@python -m ${PACKAGE_NAME}.${FILENAME}
 
+#comando para entrenar modelo en GCP AI
 gcp_submit_training:
 	gcloud ai-platform jobs submit training ${JOB_NAME} \
 		--job-dir gs://${BUCKET_NAME}/${BUCKET_TRAINING_FOLDER} \
@@ -89,13 +90,6 @@ test:
 ftest:
 	@Write me
 
-clean:
-	@rm -f */version.txt
-	@rm -f .coverage
-	@rm -fr */__pycache__ */*.pyc __pycache__
-	@rm -fr build dist
-	@rm -fr invesscience-*.dist-info
-	@rm -fr invesscience.egg-info
 
 install:
 	@pip install . -U
