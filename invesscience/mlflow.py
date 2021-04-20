@@ -74,6 +74,7 @@ class Trainer(object):
         self.pipeline = None
         self.kwargs = kwargs
         self.estimator_xgb = self.kwargs.get("estimator", self.ESTIMATOR)
+        self.upload = self.kwargs.get("upload", True)
         self.local = kwargs.get("local", False)  # if True training is done locally
         self.year = kwargs.get("year", '2014')
         self.smote = kwargs.get("smote", False)
@@ -93,17 +94,24 @@ class Trainer(object):
         self.nrows = self.X_train.shape[0]  # nb of rows to train on
         self.log_kwargs_params()
         self.log_machine_specs()
+        
+        
 
     def get_estimator(self):
         estimator = self.kwargs.get("estimator", self.ESTIMATOR)
+        
         if estimator == "LogisticRegression":
             model = LogisticRegression(class_weight= 'balanced')
+        
         elif estimator == "SVC":
             model = SVC(class_weight='balanced')
+        
         elif estimator == "KNeighborsClassifier":
             model = KNeighborsClassifier()
+        
         elif estimator == "DecisionTree":
             model = DecisionTreeClassifier(class_weight ='balanced')
+
 
         elif estimator == "RandomForestClassifier":
             model = RandomForestClassifier(bootstrap=True, ccp_alpha=4.795609695177735,
@@ -433,7 +441,7 @@ class Trainer(object):
         HINTS : use sklearn.joblib (or jbolib) libraries and google-cloud-storage"""
         joblib.dump(self.pipeline, 'model_taxi.joblib')
         print(colored("model_taxi.joblib saved locally", "green"))
-        if upload:
+        if self.upload:
             self.upload_model_to_gcp()
             print(f"uploaded model_taxi.joblib to gcp cloud storage under \n => {STORAGE_LOCATION}")
 
@@ -522,7 +530,7 @@ class Trainer(object):
         self.mlflow_log_param("cpus", cpus)
 
 
-
+ ################------------ RUN THE CODE ------#####################################################################
 
 
 if __name__ == "__main__":
@@ -530,6 +538,7 @@ if __name__ == "__main__":
 
     # Get and clean data
     experiment = "Invesscience_batch_#463"
+
 
 
     #Change the reference HERE !!!
@@ -562,10 +571,10 @@ if __name__ == "__main__":
                 estimator_params ={ 'weights' :[6, 2, 5, 3, 4]},
                 local=False, split=True,  mlflow = True, experiment_name=experiment,
                 imputer= 'SimpleImputer', imputer_params = {'strategy': 'most_frequent'},
-                  grid_search_choice= False, smote=True) #agregar
+                grid_search_choice= False, smote=True, upload=True) #agregar
 
 
-    #'n_neighbors':21, 'weights': 'distance'
+
 
             print("############   Loading Data   ############")
 
@@ -590,24 +599,3 @@ if __name__ == "__main__":
 
 
  ################------------Params founded ------#####################################################################
-
-            #High precision more variability
-
-            #Best DecisionTree
-            # DecisionTreeClassifier(class_weight='balanced', max_depth=3.853659650929652, max_features='log2',
-             #min_samples_split=0.2130615824774026, min_weight_fraction_leaf=0.40855752460926786
-
-             #Best SGDC ()
-             #SGDClassifier
-             #estimator_params ={'loss': 'epsilon_insensitive' ,'class_weight': 'balanced',alpha=0.25302306090332494,
-             #class_weight='balanced', early_stopping=True, epsilon=0.7399967340475004, eta0=0.0001,
-
-             #learning_rate='constant', loss='huber', n_iter_no_change=10, validation_fraction=0.3
-
-            #xgboost
-            #xgboost(learning_rate=0.478977150664321, max_delta_step=0, max_depth=5, min_child_weight=9, missing=nan, monotone_constraints='()', n_estimators=119, n_jobs=12, nthread=12, num_parallel_tree=1, random_state=22, reg_alpha=0, reg_lambda=1, scale_pos_weight=4, seed=22,
-            #subsample=0.5439148763175726, tree_method='exact, verbosity=None)
-
-
-#learning_rate=0.478977150664321, max_depth=5, min_child_weight=9,  n_estimators=119, nthread=12, num_parallel_tree=1, random_state=22, scale_pos_weight=4, seed=22,
- #           subsample=0.5439148763175726, tree_method='exact'
